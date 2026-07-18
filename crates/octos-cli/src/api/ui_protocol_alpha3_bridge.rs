@@ -25,7 +25,7 @@
 //! | (no `session_title`)| implicit on `update_session_title` — no SSE frame emitted    | n/a — REST PATCH, has no SSE counterpart |
 //!
 //! The two SSE `session_result` variants are durable per-row commits;
-//! `MessageCommitObserver` (installed in `ui_protocol::install_message_commit_observer`)
+//! `MessageCommitObserver` (installed in `ui_protocol_transport::install_message_commit_observer`)
 //! mirrors EVERY successful `add_message_with_seq` commit to the ledger
 //! as a `message/persisted.v1` notification — so a WS subscriber for
 //! the same session already receives a coherent durable view of those

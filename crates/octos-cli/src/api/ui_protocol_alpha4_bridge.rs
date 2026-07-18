@@ -81,7 +81,7 @@ use super::ui_protocol_ledger::UiProtocolLedger;
 /// status surface SSE consumers see.
 ///
 /// Construction is cheap — `Arc<UiProtocolLedger>` is already
-/// process-singleton (see `ui_protocol::event_ledger`), so wrapping
+/// process-singleton (see `ui_protocol_transport::event_ledger`), so wrapping
 /// costs one pointer copy per turn.
 pub(super) struct LedgerStatusGateReporter {
     inner: Arc<dyn ProgressReporter>,

@@ -620,7 +620,9 @@ pub async fn auth_status(
         // explicit opt-in (a hosted Local-mode fleet daemon behind Caddy never
         // sets it), so the SPA never offers the no-password path there. See
         // `supports_local_solo_profile_create` / `crate::api::solo_auth`.
-        local_solo_enabled: crate::api::ui_protocol::supports_local_solo_profile_create(&state),
+        local_solo_enabled: crate::api::ui_protocol_transport::supports_local_solo_profile_create(
+            &state,
+        ),
         scoped_profile,
     }))
 }
@@ -1555,7 +1557,10 @@ pub async fn voice_readiness(
     // runtimes (onboarding, `profile/llm/upsert`) that live outside
     // `state.profiles` — so readiness can't report "not started" while voice
     // turns actually work.
-    let rt = crate::api::ui_protocol::resolve_session_profile_runtime(&state, Some(&profile_id));
+    let rt = crate::api::ui_protocol_transport::resolve_session_profile_runtime(
+        &state,
+        Some(&profile_id),
+    );
     let llm = VoiceLeg {
         ready: rt
             .as_ref()
@@ -2667,7 +2672,7 @@ pub async fn delete_my_soul(
 
 // ── Content catalog endpoints ────────────────────────────────────────
 
-// Helper for `ui_protocol::handle_content_list` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_content_list` (M12 Phase D-5).
 // The REST route `GET /api/my/content` was retired in this milestone; the
 // function survives as a private helper that the WS dispatcher calls
 // directly to back the `content/list` RPC method. Downgraded to
@@ -2834,7 +2839,7 @@ pub async fn my_content_body(
     Ok(([(header::CONTENT_TYPE, content_type)], Body::from(data)).into_response())
 }
 
-// Helper for `ui_protocol::handle_content_delete` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_content_delete` (M12 Phase D-5).
 // The REST route `DELETE /api/my/content/{id}` was retired in this
 // milestone; the function survives as a private helper backing the
 // `content/delete` WS RPC method.
@@ -2880,7 +2885,7 @@ pub(super) struct BulkDeleteRequest {
     pub ids: Vec<String>,
 }
 
-// Helper for `ui_protocol::handle_content_bulk_delete` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_content_bulk_delete` (M12 Phase D-5).
 // The REST route `POST /api/my/content/bulk-delete` was retired in this
 // milestone; the function survives as a private helper backing the
 // `content/bulk_delete` WS RPC method.

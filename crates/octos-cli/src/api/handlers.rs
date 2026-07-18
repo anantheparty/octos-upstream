@@ -157,7 +157,9 @@ fn resolve_session_workspace_root(
         return None;
     }
     let key = octos_core::SessionKey(session_id.to_string());
-    if let Some(ws) = crate::api::ui_protocol::session_workspace_root_for_state(state, &key) {
+    if let Some(ws) =
+        crate::api::ui_protocol_transport::session_workspace_root_for_state(state, &key)
+    {
         if map_workspace_belongs_to_tenant(&ws, data_dir) {
             return Some(ws);
         }
@@ -585,7 +587,7 @@ fn is_internal_session_topic(topic: &str) -> bool {
     topic.starts_with("child-") || topic == "default.tasks" || topic.ends_with(".tasks")
 }
 
-// Helper for `ui_protocol::handle_session_list` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_session_list` (M12 Phase D-5).
 // The REST route `GET /api/sessions` was retired; this function survives
 // as the implementation backing the WS `session/list` RPC method.
 pub async fn list_sessions(
@@ -798,7 +800,7 @@ fn list_profile_sessions(profile_data_dir: &std::path::Path) -> Vec<SessionInfo>
         .collect()
 }
 
-// Helper for `ui_protocol::handle_session_messages_page` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_session_messages_page` (M12 Phase D-5).
 // The REST route `GET /api/sessions/{id}/messages` was retired; this
 // function survives as the implementation backing the WS
 // `session/messages_page` RPC method.
@@ -1058,7 +1060,7 @@ pub struct MessageInfo {
     pub thread_id: Option<String>,
 }
 
-// Helper for `ui_protocol::handle_session_status_get` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_session_status_get` (M12 Phase D-5).
 // The REST route `GET /api/sessions/{id}/status` was retired; this
 // function survives as the implementation backing the WS
 // `session/status.get` RPC method.
@@ -1093,7 +1095,7 @@ pub async fn session_status(
     .into_response()
 }
 
-// Helper for `ui_protocol::handle_session_tasks_list` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_session_tasks_list` (M12 Phase D-5).
 // The REST route `GET /api/sessions/{id}/tasks` was retired; this
 // function survives as the implementation backing the WS
 // `session/tasks.list` RPC method.
@@ -1339,7 +1341,7 @@ fn collect_session_files(
     }
 }
 
-// Helper for `ui_protocol::handle_session_files_list` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_session_files_list` (M12 Phase D-5).
 // The REST route `GET /api/sessions/{id}/files` was retired; this
 // function survives as the implementation backing the WS
 // `session/files.list` RPC method.
@@ -1393,7 +1395,7 @@ pub async fn session_files(
     Json(files).into_response()
 }
 
-// Helper for `ui_protocol::handle_session_workspace_get` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_session_workspace_get` (M12 Phase D-5).
 // The REST route `GET /api/sessions/{id}/workspace-contract` was retired;
 // this function survives as the implementation backing the WS
 // `session/workspace.get` RPC method.
@@ -1483,7 +1485,7 @@ fn should_resolve_file_access_from_profile(
         || identity.is_some()
 }
 
-// Helper for `ui_protocol::handle_session_title_set` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_session_title_set` (M12 Phase D-5).
 // The REST route `PATCH /api/sessions/{id}/title` was retired; this
 // function survives as the implementation backing the WS
 // `session/title.set` RPC method.
@@ -1546,7 +1548,7 @@ pub async fn update_session_title(
     // did not contain profile-scoped runtime sessions and returned
     // `NOT_FOUND` for raw `web-*` ids under profile auth.
     for key in candidates {
-        let Some(sessions) = super::ui_protocol::resolve_sessions_for_lookup(
+        let Some(sessions) = super::ui_protocol_transport::resolve_sessions_for_lookup(
             &state,
             None,
             routed_profile_id.as_deref(),
@@ -1594,7 +1596,7 @@ pub async fn update_session_title(
     }
 }
 
-// Helper for `ui_protocol::handle_session_delete` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_session_delete` (M12 Phase D-5).
 // The REST route `DELETE /api/sessions/{id}` was retired; this
 // function survives as the implementation backing the WS
 // `session/delete` RPC method.
@@ -1632,7 +1634,7 @@ pub async fn delete_session(
     // same store. The legacy code locked only `state.sessions`, which
     // did not contain profile-scoped runtime sessions.
     for key in candidates {
-        let Some(sessions) = super::ui_protocol::resolve_sessions_for_lookup(
+        let Some(sessions) = super::ui_protocol_transport::resolve_sessions_for_lookup(
             &state,
             None,
             routed_profile_id.as_deref(),
@@ -3684,7 +3686,7 @@ pub struct StatusResponse {
     pub base_domain: String,
 }
 
-// Helper for `ui_protocol::handle_system_status_get` (M12 Phase D-5).
+// Helper for `ui_protocol_transport::handle_system_status_get` (M12 Phase D-5).
 // The REST route `GET /api/status` was retired; this function survives
 // as the implementation backing the WS `system/status.get` RPC method.
 pub async fn status(State(state): State<Arc<AppState>>) -> Json<StatusResponse> {
@@ -4090,7 +4092,7 @@ mod tests {
     // Legacy `POST /api/chat` REST tests (chat_request_*, chat_response_*)
     // were retired with the handler in the cleanup follow-up to PR #908.
     // Wire-level chat coverage now lives in
-    // `api::ui_protocol::tests` (turn/start, turn/completed, etc.) and
+    // `api::ui_protocol_transport::tests` (turn/start, turn/completed, etc.) and
     // the `coding_multi_session` integration test (per-session workspace
     // isolation).
 
@@ -6003,13 +6005,13 @@ mod tests {
     //     — per-session `SessionRuntime::bootstrap` writes
     //       `.octos-workspace.toml` AND multi-tenant tool registries
     //       stay isolated when distinct `workspace_hint`s are pinned.
-    //   * `api::ui_protocol::tests` (`turn/start` happy path +
+    //   * `api::ui_protocol_transport::tests` (`turn/start` happy path +
     //     503-on-missing-profile-runtime) — WS handler hits the same
     //     `SessionRuntimeCache::get_or_init` call site.
     //
     // The `appui_default_session_cwd` workspace-hint forwarding the
     // M11-F regression-fix test asserted is now exercised directly
-    // through the WS turn dispatcher (`ui_protocol::run_standalone_turn`).
+    // through the WS turn dispatcher (`ui_protocol_transport::run_standalone_turn`).
 
     // ── #995 — `decide_resolved_profile_id` precedence + auth ──────────
     //

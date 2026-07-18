@@ -945,7 +945,7 @@ impl ServeCommand {
         });
 
         if self.stdio {
-            crate::api::ui_protocol::stdio_connection(state).await?;
+            crate::api::ui_protocol_transport::stdio_connection(state).await?;
             tracing::info!("stopping all gateway child processes");
             let _ = process_manager.stop_all().await;
             return Ok(());
@@ -1186,7 +1186,7 @@ impl ServeCommand {
         // re-loaded after a serve restart) would otherwise sit undrained until
         // a client reconnects. Shares the process-global active-turns registry
         // with the per-connection ticks, so there is no double-run.
-        crate::api::ui_protocol::spawn_global_master_continuation_drain(state.clone());
+        crate::api::ui_protocol_transport::spawn_global_master_continuation_drain(state.clone());
 
         let app = build_router(state);
         let addr = format!("{}:{}", self.host, self.port);
